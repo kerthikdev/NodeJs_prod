@@ -5,7 +5,7 @@ const port = 3000;
 
 // Route for the homepage
 app.get('/', (req, res) => {
-  res.send('Hello, Node.js Application !');
+  res.send('Hello, Node.js Applicationn !');
 });
 
 // Start the server
