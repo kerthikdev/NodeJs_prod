@@ -1,14 +1,31 @@
-// index.js
 const express = require('express');
-const app = express();
-const port = 3000;
+const client = require('prom-client');
 
-// Route for the homepage
-app.get('/', (req, res) => {
-  res.send('Hello, Node.js!, welcome to vj siddhu vlogs');
+const app = express();
+const register = new client.Registry();
+
+// Collect default metrics
+client.collectDefaultMetrics({ register });
+
+// Create a custom metric (Optional)
+const httpRequestCounter = new client.Counter({
+  name: 'http_requests_total',
+  help: 'Total number of HTTP requests',
+});
+register.registerMetric(httpRequestCounter);
+
+// Metrics endpoint
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
 });
 
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+// Sample request to increase counter
+app.get('/', (req, res) => {
+  httpRequestCounter.inc();
+  res.send('Hello, Prometheus!');
+});
+
+app.listen(80, () => {
+  console.log('Server running on port 80');
 });
