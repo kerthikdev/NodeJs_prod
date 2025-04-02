@@ -1,0 +1,44 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main  # Runs on every push to the main branch
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t myapp .
+
+      # Tag Docker image
+      - name: Tag Docker image
+        run: docker tag myapp ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
+
+      # Push Docker image to Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
+
+      # Deploy to AWS EC2
+      - name: Deploy to AWS EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
+            docker stop myapp || true
+            docker rm myapp || true
+            docker run -d -p 80:3000 --name myapp ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
