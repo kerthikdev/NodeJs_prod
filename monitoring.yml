@@ -1,5 +1,5 @@
 ---
-- name: Install Prometheus and Grafana
+- name: Install Prometheus, Grafana, and Docker
   hosts: all
   become: yes
   tasks:
@@ -13,6 +13,47 @@
           - software-properties-common
         state: present
         update_cache: yes
+
+    # ✅ Install Docker
+    - name: Install Docker dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - gnupg-agent
+          - software-properties-common
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add user to Docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
 
     # ✅ Install Prometheus
     - name: Get the latest Prometheus release version
