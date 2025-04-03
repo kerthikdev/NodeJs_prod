@@ -4,7 +4,7 @@ const client = require('prom-client');
 const app = express();
 const register = new client.Registry();
 
-// Collect default metrics
+// Collect default metrics and associate them with the register instance
 client.collectDefaultMetrics({ register });
 
 // Create a custom metric (Optional)
@@ -12,6 +12,8 @@ const httpRequestCounter = new client.Counter({
   name: 'http_requests_total',
   help: 'Total number of HTTP requests',
 });
+
+// Register the custom metric
 register.registerMetric(httpRequestCounter);
 
 // Metrics endpoint
@@ -26,6 +28,8 @@ app.get('/', (req, res) => {
   res.send('Hello, Prometheus!');
 });
 
-app.listen(80, () => {
-  console.log('Server running on port 80');
+// Run server on port 4000
+const PORT = 4000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
